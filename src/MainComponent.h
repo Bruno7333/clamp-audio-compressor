@@ -10,9 +10,12 @@ class MainComponent : public juce::Component {
         void resized() override;
 
     private:
-        juce::TextButton pressMeButton;
+        juce::TextButton applyButton;
         juce::ComboBox inputMenu;
         juce::ComboBox outputMenu;
-        juce::AudioDeviceManager inputManager;
-        juce::AudioDeviceManager outputManager;
+
+        juce::AudioDeviceManager deviceManager;
+        juce::AudioDeviceManager::AudioDeviceSetup audiSetup;
+
+        void ApplyAudioDeviceSetup();
 };

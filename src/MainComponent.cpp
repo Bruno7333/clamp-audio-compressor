@@ -2,29 +2,27 @@
 
 MainComponent::MainComponent()
 {
-    setSize(400,500);
+    setSize(700,500);
 
-    inputManager.initialise(2, 0, nullptr, true);
-    outputManager.initialise(0, 2, nullptr, true);
+    deviceManager.initialise(2, 2, nullptr, true);
 
-    pressMeButton.setButtonText("Press Me");
-    addAndMakeVisible(pressMeButton);
+    applyButton.setButtonText("Apply");
+    addAndMakeVisible(applyButton);
 
-    inputMenu.addItem("Choose Input Device", 1);
-    outputMenu.addItem("Choose Output Device", 1);
+    inputMenu.addItem("Choose Virtual Audio Device", 1); // Input for program
+    outputMenu.addItem("Choose Headphones", 1); // Output from the program
 
-    auto* inputType = inputManager.getCurrentDeviceTypeObject();
-    auto* outputType = outputManager.getCurrentDeviceTypeObject();
+    auto* deviceType = deviceManager.getCurrentDeviceTypeObject();
 
-    if (inputType != nullptr){
-        auto inputNames = inputType->getDeviceNames(true);
+    if (deviceType != nullptr){
+        auto inputNames = deviceType->getDeviceNames(true);
 
         for (int i = 0; i < inputNames.size(); i++){
             inputMenu.addItem(inputNames[i], i + 2);
         }
     }
-    if (outputType != nullptr){
-        auto outputNames = outputType->getDeviceNames(false);
+    if (deviceType != nullptr){
+        auto outputNames = deviceType->getDeviceNames(false);
 
         for (int i = 0; i < outputNames.size(); i++){
             outputMenu.addItem(outputNames[i], i + 2);
@@ -37,12 +35,30 @@ MainComponent::MainComponent()
     addAndMakeVisible(inputMenu);
     addAndMakeVisible(outputMenu);
 
+    applyButton.onClick = [this]{
+        ApplyAudioDeviceSetup();
+    }
 
+
+}
+
+void MainComponent::ApplyAudioDeviceSetup()
+{
+    if(inputMenu.getSelectedId() == 1 || outputMenu.getSelectedID() == 1){
+        return;
+    }
+
+    deviceManager.getAudioDeviceSetup(audioSetup);
+
+    audioSetup.inputDeviceName = inputMenu.getText();
+    auidoSetup.outputDeviceName = outputMenu.getText();
+
+    deviceManager.setAudioDeviceSetup(audioSetup, true);
 }
 
 void MainComponent::resized()
 {
-    pressMeButton.setBounds(150, 250, 100, 40);
+    applyButton.setBounds(150, 250, 100, 40);
     inputMenu.setBounds(100, 150, 200, 30);
     outputMenu.setBounds(100, 200, 200, 30);
 

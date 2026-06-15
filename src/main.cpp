@@ -8,8 +8,9 @@ class MyApplicationWindow : public juce::DocumentWindow
                                         juce::Colours::lightgrey,
                                         juce::DocumentWindow::allButtons)
         {
-            setResizable(true, true);
+            setResizable(false, false);
             setContentOwned(new MainComponent(), true);
+            centreWidthSize(700, 500);
             setVisible(true);
         }
 
