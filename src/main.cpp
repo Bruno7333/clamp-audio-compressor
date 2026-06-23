@@ -6,11 +6,11 @@ class MyApplicationWindow : public juce::DocumentWindow
     public:
         MyApplicationWindow() : juce::DocumentWindow("AudioLimiter",
                                         juce::Colours::lightgrey,
-                                        juce::DocumentWindow::allButtons)
+                                        juce::DocumentWindow::minimiseButton | juce::DocumentWindow::closeButton)
         {
             setResizable(false, false);
             setContentOwned(new MainComponent(), true);
-            centreWidthSize(700, 500);
+            centreWithSize(700, 500);
             setVisible(true);
         }
 
@@ -34,8 +34,6 @@ class AudioLimiterApp : public juce::JUCEApplication
         void initialise(const juce::String& commandLine) override
         {
             myMainWindow.reset(new MyApplicationWindow());
-            myMainWindow->setBounds(100, 100, 400, 500);
-            myMainWindow->setVisible(true);
         }
 
         void shutdown() override
