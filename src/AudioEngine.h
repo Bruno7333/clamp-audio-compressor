@@ -20,4 +20,6 @@ class AudioEngine : public juce::AudioIODeviceCallback
         void audioDeviceStopped() override;
 
     private:
+            double sampleRate { 0.0 };
+            int bufferSize { 0 };
 };

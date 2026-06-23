@@ -3,6 +3,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "CompressorLookAndFeel.h"
+#include "AudioEngine.h"
 
 class MainComponent : public juce::Component,
                       private juce::Timer
@@ -17,6 +18,7 @@ class MainComponent : public juce::Component,
     private:
         // Declared first so it outlives every child component that uses it.
         CompressorLookAndFeel lookAndFeel;
+        AudioEngine engine;
 
         // Text shown above sections / controls
         juce::Label titleLabel;

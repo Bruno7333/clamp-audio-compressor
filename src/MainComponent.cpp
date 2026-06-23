@@ -6,6 +6,7 @@ MainComponent::MainComponent()
     setLookAndFeel(&lookAndFeel);
 
     deviceManager.initialise(2, 2, nullptr, true);
+    deviceManager.addAudioCallback(&engine);
 
     // Title + section headers
     titleLabel.setText("Dynamic Range Compressor", juce::dontSendNotification);
@@ -121,6 +122,7 @@ MainComponent::~MainComponent()
 {
     // Detach the custom look and feel before it is destroyed.
     setLookAndFeel(nullptr);
+    deviceManager.removeAudioCallback(&engine);
 }
 
 void MainComponent::applyAudioDeviceSetup()
