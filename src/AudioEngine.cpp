@@ -14,6 +14,8 @@ void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
 {
     sampleRate = device->getCurrentSampleRate();
     bufferSize = device->getCurrentBufferSizeSamples();
+
+    processor.prepare(sampleRate);
 }
 
 void AudioEngine::audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
@@ -36,6 +38,7 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const* inputChan
             }
         }
     }
+    processor.process(outputChannelData, numOutputChannels, numSamples);
 
 }
 

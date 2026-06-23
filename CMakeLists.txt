@@ -13,6 +13,7 @@ target_sources(AudioLimiter
         src/main.cpp
         src/MainComponent.cpp
         src/AudioEngine.cpp
+        src/CompressorProcessor.cpp
 )
 
 target_link_libraries(AudioLimiter

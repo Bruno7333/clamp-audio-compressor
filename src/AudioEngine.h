@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_utils/juce_audio_utils.h>
+#include "CompressorProcessor.h"
 
 class AudioEngine : public juce::AudioIODeviceCallback
 {
@@ -22,4 +23,7 @@ class AudioEngine : public juce::AudioIODeviceCallback
     private:
             double sampleRate { 0.0 };
             int bufferSize { 0 };
+            CompressorProcessor processor;
+
+
 };
