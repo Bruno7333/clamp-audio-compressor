@@ -44,16 +44,45 @@ Selectable from the **Mode** dropdown:
 
 ## Requirements
 
-- **Windows 10 or 11.**
-- **Visual Studio 2022** with the **"Desktop development with C++"** workload (this provides the MSVC compiler and the Windows SDK). [Download here](https://visualstudio.microsoft.com/downloads/).
+**To just run Clamp** (Option A — download the prebuilt app):
+
+- **Windows 10 or 11** (64-bit). Nothing else is required.
+- **A virtual audio cable** *(optional)* — needed only to process audio from other apps (games, browsers, etc.). This guide uses **[VB-CABLE](https://vb-audio.com/Cable/)**, installed below. Not needed if you only process a microphone.
+
+**To build Clamp from source** (Option B), you additionally need:
+
+- **Visual Studio 2022** with the **"Desktop development with C++"** workload (provides the MSVC compiler and the Windows SDK). [Download here](https://visualstudio.microsoft.com/downloads/).
 - **[CMake](https://cmake.org/download/) 3.22 or newer** (Visual Studio 2022 already bundles a compatible CMake).
-- **The [JUCE](https://github.com/juce-framework/JUCE) framework** (installed in step 1 below).
-- **A virtual audio cable** if you want to process audio from other apps — this guide uses **[VB-CABLE](https://vb-audio.com/Cable/)** (installed in step 2 below).
+- **The [JUCE](https://github.com/juce-framework/JUCE) framework** (installed in Option B below).
 
 ---
-# Installation Instructions:
+# Installation Instructions
 
-## Step 1: Install the JUCE library
+There are two ways to get Clamp. Pick whichever suits you:
+
+- **Option A — Download the prebuilt app (easiest):** grab the ready-to-run executable from GitHub Releases. No JUCE, no compiler, no building required.
+- **Option B — Build from source:** compile it yourself with CMake.
+
+After getting Clamp either way, optionally install **VB-CABLE**, then **configure and run** — both are covered further below and apply to both options.
+
+---
+
+## Option A: Download the prebuilt release
+
+1. Open the project's **[Releases](../../releases)** page on GitHub.
+2. Under the latest release's **Assets**, download the **`Clamp-vX.Y.Z-win64.zip`** file (e.g. `Clamp-v0.1.0-win64.zip` — the version number matches the release).
+3. Unzip it anywhere (for example, your Desktop).
+4. Double-click **`Clamp.exe`** to run it — there is nothing to install.
+
+> On first launch, Windows may show a blue **"Windows protected your PC"** box because the app isn't code-signed. Click **More info -> Run anyway**. This is expected for unsigned apps.
+
+That's all you need to run Clamp. Skip ahead to **Install VB-CABLE** (optional) and **Configure and run**.
+
+---
+
+## Option B: Build from source
+
+### Step B1: Install the JUCE library
 
 Clamp builds JUCE from source via CMake, so you only need a local copy of the JUCE repository — no separate install or compilation step.
 
@@ -75,25 +104,7 @@ Clamp builds JUCE from source via CMake, so you only need a local copy of the JU
 
 That's it — CMake will compile the JUCE modules it needs automatically the first time you build.
 
----
-
-## Step 2: Install VB-CABLE (virtual audio cable)
-
-A virtual audio cable lets Clamp capture the sound coming out of other applications (music players, browsers, games) so it can process it. Without it, you can still use a microphone as the input, but you can't process system/app audio.
-
-1. Download VB-CABLE from <https://vb-audio.com/Cable/>.
-2. Extract the downloaded `.zip`.
-3. **Right-click `VBCABLE_Setup_x64.exe` and choose "Run as administrator"**, then click **Install Driver**.
-4. **Reboot** your PC so Windows registers the new devices.
-
-After rebooting you will have two new audio devices:
-
-- **CABLE Input (VB-Audio Virtual Cable)** — a *playback* device. Send audio here to capture it.
-- **CABLE Output (VB-Audio Virtual Cable)** — a *recording* device. Clamp reads from here.
-
----
-
-## Step 3: Build Clamp
+### Step B2: Build Clamp
 
 From the project root:
 
@@ -112,9 +123,25 @@ The Release build statically links the runtime, so `Clamp.exe` runs on any Windo
 
 ---
 
-## Step 4: Configure and run
+## Install VB-CABLE (virtual audio cable) — optional
 
-### A) Process audio from another app (using VB-CABLE)
+A virtual audio cable lets Clamp capture the sound coming out of other applications (music players, browsers, games) so it can process it. Without it, you can still use a microphone as the input, but you can't process system/app audio. **This applies whether you downloaded Clamp (Option A) or built it (Option B).**
+
+1. Download VB-CABLE from <https://vb-audio.com/Cable/>.
+2. Extract the downloaded `.zip`.
+3. **Right-click `VBCABLE_Setup_x64.exe` and choose "Run as administrator"**, then click **Install Driver**.
+4. **Reboot** your PC so Windows registers the new devices.
+
+After rebooting you will have two new audio devices:
+
+- **CABLE Input (VB-Audio Virtual Cable)** — a *playback* device. Send audio here to capture it.
+- **CABLE Output (VB-Audio Virtual Cable)** — a *recording* device. Clamp reads from here.
+
+---
+
+## Configure and run
+
+### Processing game / app audio (via VB-CABLE)
 
 This routes a program's sound through Clamp and out to your headphones/speakers:
 
@@ -129,7 +156,7 @@ The signal now flows: **source app -> CABLE Input -> CABLE Output -> Clamp -> yo
 
 > **Note:** while audio is routed into the cable, you'll only hear it through Clamp's output. To go back to normal, set the source app's playback device back to your speakers.
 
-### B) Process a microphone instead
+### Processing a microphone
 
 1. Launch `Clamp.exe`.
 2. Set **Input Device** to your microphone and **Output Device** to your headphones.
