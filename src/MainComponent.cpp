@@ -9,7 +9,7 @@ MainComponent::MainComponent()
     deviceManager.addAudioCallback(&engine);
 
     // Title + section headers
-    titleLabel.setText("Dynamic Range Compressor", juce::dontSendNotification);
+    titleLabel.setText("Clamp: Dynamic Range Compressor", juce::dontSendNotification);
     titleLabel.setFont(juce::Font(26.0f, juce::Font::bold));
     titleLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(titleLabel);
@@ -105,9 +105,23 @@ MainComponent::MainComponent()
     setupName(releaseLabel,   "Release");
     setupName(makeupLabel,    "Makeup");
 
-    // Compressor buttons (UI only, no functionality yet)
+    // Processing mode selector. IDs are 1-based; engine uses 0-based.
+    modeMenu.addItem("Compressor",      1);
+    modeMenu.addItem("Limiter",         2);
+    modeMenu.addItem("Constant Volume", 3);
+    modeMenu.setSelectedId(1, juce::dontSendNotification);
+    modeMenu.onChange = [this]()
+    {
+        engine.setMode(modeMenu.getSelectedId() - 1);
+    };
+    addAndMakeVisible(modeMenu);
+
     bypassButton.setButtonText("Bypass");
     bypassButton.setClickingTogglesState(true);
+    bypassButton.onClick = [this]()
+    {
+        engine.setBypass(bypassButton.getToggleState());
+    };
     addAndMakeVisible(bypassButton);
 
     resetButton.setButtonText("Reset to Defaults");
@@ -202,8 +216,12 @@ void MainComponent::resized()
     // Compressor panel fills the remaining space
     compPanelBounds = area;
     auto comp = compPanelBounds.reduced(16);
-    compHeader.setBounds(comp.removeFromTop(18));
-    comp.removeFromTop(6);
+
+    // Header row: section title on the left, mode dropdown on the right.
+    auto compTop = comp.removeFromTop(30);
+    modeMenu.setBounds(compTop.removeFromRight(180));
+    compHeader.setBounds(compTop.withSizeKeepingCentre(compTop.getWidth(), 18));
+    comp.removeFromTop(8);
 
     juce::Slider* knobs[5] = { &thresholdSlider, &ratioSlider, &attackSlider, &releaseSlider, &makeupSlider };
     juce::Label*  names[5] = { &thresholdLabel,  &ratioLabel,  &attackLabel,  &releaseLabel,  &makeupLabel  };
@@ -241,6 +259,14 @@ void MainComponent::applyCompressorSettings()
     currentRelease   = releaseSlider.getValue();
     currentMakeup    = makeupSlider.getValue();
     currentBypass    = bypassButton.getToggleState();
+
+    // Push the committed values into the audio engine.
+    engine.setThreshold((float) currentThreshold);
+    engine.setRatio((float) currentRatio);
+    engine.setAttack((float) currentAttack);
+    engine.setRelease((float) currentRelease);
+    engine.setMakeup((float) currentMakeup);
+    engine.setBypass(currentBypass);
 }
 
 void MainComponent::resetToDefault()

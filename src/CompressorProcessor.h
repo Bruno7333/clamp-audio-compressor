@@ -5,8 +5,11 @@
 class CompressorProcessor
 {
     public:
+        enum Mode { Compressor, Limiter, ConstantVolume };
+
         void prepare(double newSampleRate);
         void process(float* const* channels, int numChannels, int numSamples);
+        void setMode(Mode newMode);
 
         void setThreshold(float newThresholdDb);
         void setRatio(float newRatio);
@@ -16,6 +19,9 @@ class CompressorProcessor
 
     private:
         void updateCoefficients();
+
+        Mode mode { Mode::Compressor };
+        static constexpr float noiseFloorDb { -60.0f };
 
         double sampleRate { 0.0 };
 

@@ -40,6 +40,10 @@ void CompressorProcessor::updateCoefficients()
     releaseCoeff = (float) std::exp(-1.0 / (releaseSeconds * sampleRate));
 }
 
+void CompressorProcessor::setMode(Mode newMode){
+    mode = newMode;
+}
+
 void CompressorProcessor::prepare(double newSampleRate){
     sampleRate = newSampleRate;
     updateCoefficients();
@@ -57,9 +61,23 @@ void CompressorProcessor::process(float* const* channels, int numChannels, int n
         float levelDb = juce::Decibels::gainToDecibels(maxMag);
         float gainDb = 0.0f;
 
-        if(levelDb > thresholdDb){
-            gainDb = (thresholdDb - levelDb) * (1.0f - (1.0f / ratio));
+        switch (mode){
+            case Compressor:
+                if(levelDb > thresholdDb)
+                    gainDb = (thresholdDb - levelDb) * (1.0f - (1.0f / ratio));
+                break;
+            case Limiter:
+                if(levelDb > thresholdDb)
+                    gainDb = thresholdDb - levelDb;
+                break;
+            case ConstantVolume:
+                if(levelDb > noiseFloorDb)
+                    gainDb = thresholdDb - levelDb;
+                break;
+
+
         }
+
 
         float targetGain = juce::Decibels::decibelsToGain(gainDb);
 

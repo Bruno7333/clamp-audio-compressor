@@ -4,7 +4,7 @@
 class MyApplicationWindow : public juce::DocumentWindow 
 {
     public:
-        MyApplicationWindow() : juce::DocumentWindow("AudioLimiter",
+        MyApplicationWindow() : juce::DocumentWindow("Clamp",
                                         juce::Colours::lightgrey,
                                         juce::DocumentWindow::minimiseButton | juce::DocumentWindow::closeButton)
         {
@@ -25,7 +25,7 @@ class AudioLimiterApp : public juce::JUCEApplication
     public:
         const juce::String getApplicationName() override
         {
-            return "AudioLimiter";
+            return "Clamp";
         }
         const juce::String getApplicationVersion() override
         {

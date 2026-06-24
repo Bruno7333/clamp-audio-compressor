@@ -44,6 +44,9 @@ class MainComponent : public juce::Component,
         juce::Label releaseLabel;
         juce::Label makeupLabel;
 
+        // Processing mode selector (Compressor / Limiter / Constant Volume)
+        juce::ComboBox modeMenu;
+
         // Compressor buttons
         juce::TextButton bypassButton;
         juce::TextButton resetButton;
