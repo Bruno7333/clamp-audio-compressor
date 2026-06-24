@@ -12,14 +12,6 @@ Input device  ->  AudioEngine (pass-through)  ->  CompressorProcessor (DSP)  -> 
 
 The `AudioEngine` copies the selected input into the output buffer, then the `CompressorProcessor` applies the chosen dynamics processing in place before it reaches your speakers/headphones.
 
-## Processing modes
-
-Selectable from the **Mode** dropdown:
-
-- **Compressor** — Standard dynamic range compression. Signal above the threshold is attenuated according to the ratio, smoothed by the attack/release times.
-- **Limiter** — A brick-wall limiter (effectively an infinite ratio). Anything above the threshold is clamped down *to* the threshold, so peaks never exceed that level.
-- **Constant Volume** — A leveler/AGC: it pushes quiet material *up* and loud material *down* toward a single target loudness (set by the Threshold knob). A built-in noise floor (-60 dB) prevents it from boosting silence.
-
 ## Controls
 
 **Routing**
@@ -41,54 +33,115 @@ Selectable from the **Mode** dropdown:
 - **Apply** — commits routing + compressor settings.
 - **Reset to Defaults** — restores the knobs to their default values (then press Apply to commit).
 
-## How it works
+## Processing modes
 
-The project is organized into a few focused classes:
+Selectable from the **Mode** dropdown:
 
-- **`AudioEngine`** — implements `juce::AudioIODeviceCallback`. Performs the input-to-output pass-through and owns the DSP. Parameters set from the GUI are stored in `std::atomic` members, making the GUI-to-audio-thread handoff lock-free and real-time safe.
-- **`CompressorProcessor`** — the DSP core. For each sample it detects the peak level across channels (stereo-linked), converts to decibels, computes the required gain reduction for the active mode, smooths it with a one-pole attack/release envelope, and applies the result plus makeup gain.
-- **`MainComponent`** — the GUI: device routing, parameter knobs, the mode selector, and the buttons. It pushes committed values into the `AudioEngine`.
-- **`CompressorLookAndFeel`** — custom theming for the interface.
+- **Compressor** — Standard dynamic range compression. Signal above the threshold is attenuated according to the ratio, smoothed by the attack/release times.
+- **Limiter** — A brick-wall limiter (effectively an infinite ratio). Anything above the threshold is clamped down *to* the threshold, so peaks never exceed that level.
+- **Constant Volume** — A leveler/AGC: it pushes quiet material *up* and loud material *down* toward a single target loudness (set by the Threshold knob). A built-in noise floor (-60 dB) prevents it from boosting silence.
+
 
 ## Requirements
 
-- A C++ compiler with C++17 support (MSVC on Windows).
-- [CMake](https://cmake.org/) 3.22 or newer.
-- The [JUCE](https://github.com/juce-framework/JUCE) framework available locally.
+- **Windows 10 or 11.**
+- **Visual Studio 2022** with the **"Desktop development with C++"** workload (this provides the MSVC compiler and the Windows SDK). [Download here](https://visualstudio.microsoft.com/downloads/).
+- **[CMake](https://cmake.org/download/) 3.22 or newer** (Visual Studio 2022 already bundles a compatible CMake).
+- **The [JUCE](https://github.com/juce-framework/JUCE) framework** (installed in step 1 below).
+- **A virtual audio cable** if you want to process audio from other apps — this guide uses **[VB-CABLE](https://vb-audio.com/Cable/)** (installed in step 2 below).
 
-> **Note:** `CMakeLists.txt` references JUCE via a local path (`add_subdirectory(C:/Users/bruno/JUCE ...)`). Adjust this path to point at your own JUCE checkout before building.
+---
+# Installation Instructions:
 
-## Building
+## Step 1: Install the JUCE library
+
+Clamp builds JUCE from source via CMake, so you only need a local copy of the JUCE repository — no separate install or compilation step.
+
+1. Download JUCE one of two ways:
+   - **Git:** `git clone https://github.com/juce-framework/JUCE.git`
+   - **Zip:** download from the [JUCE releases page](https://github.com/juce-framework/JUCE/releases) and extract it.
+2. Place the resulting `JUCE` folder somewhere stable, for example `C:/JUCE` or `C:/Users/<you>/JUCE`.
+3. Open `CMakeLists.txt` and point the JUCE path at that folder. Edit this line so the path matches where you put JUCE:
+
+   ```cmake
+   add_subdirectory(C:/Users/bruno/JUCE JUCE-build)
+   ```
+
+   For example, if you cloned JUCE to `C:/JUCE`, change it to:
+
+   ```cmake
+   add_subdirectory(C:/JUCE JUCE-build)
+   ```
+
+That's it — CMake will compile the JUCE modules it needs automatically the first time you build.
+
+---
+
+## Step 2: Install VB-CABLE (virtual audio cable)
+
+A virtual audio cable lets Clamp capture the sound coming out of other applications (music players, browsers, games) so it can process it. Without it, you can still use a microphone as the input, but you can't process system/app audio.
+
+1. Download VB-CABLE from <https://vb-audio.com/Cable/>.
+2. Extract the downloaded `.zip`.
+3. **Right-click `VBCABLE_Setup_x64.exe` and choose "Run as administrator"**, then click **Install Driver**.
+4. **Reboot** your PC so Windows registers the new devices.
+
+After rebooting you will have two new audio devices:
+
+- **CABLE Input (VB-Audio Virtual Cable)** — a *playback* device. Send audio here to capture it.
+- **CABLE Output (VB-Audio Virtual Cable)** — a *recording* device. Clamp reads from here.
+
+---
+
+## Step 3: Build Clamp
 
 From the project root:
 
 ```sh
 cmake -B build -S .
-cmake --build build --config Debug
+cmake --build build --config Release
 ```
 
-The executable is produced at:
+The finished, self-contained executable is produced at:
 
 ```
-build/AudioLimiter_artefacts/Debug/Clamp.exe
+build/AudioLimiter_artefacts/Release/Clamp.exe
 ```
 
-## Usage
+The Release build statically links the runtime, so `Clamp.exe` runs on any Windows PC without extra dependencies.
+
+---
+
+## Step 4: Configure and run
+
+### A) Process audio from another app (using VB-CABLE)
+
+This routes a program's sound through Clamp and out to your headphones/speakers:
+
+1. **Send the source app's audio into the cable.** In Windows, open **Settings -> System -> Sound**, and under **Output** (or per-app in *Volume mixer*) set the playback device to **CABLE Input (VB-Audio Virtual Cable)**. Everything the app plays now goes into the cable instead of your speakers.
+2. **Launch `Clamp.exe`.**
+3. Set **Input Device** to **CABLE Output (VB-Audio Virtual Cable)** — this is the audio captured from step 1.
+4. Set **Output Device** to your headphones or speakers — this is where the processed sound is sent.
+5. Pick a **Mode** (Compressor, Limiter, or Constant Volume) and adjust the knobs.
+6. Click **Apply** to commit the device routing and the compressor settings.
+
+The signal now flows: **source app -> CABLE Input -> CABLE Output -> Clamp -> your headphones**.
+
+> **Note:** while audio is routed into the cable, you'll only hear it through Clamp's output. To go back to normal, set the source app's playback device back to your speakers.
+
+### B) Process a microphone instead
 
 1. Launch `Clamp.exe`.
-2. Select an **Input Device** and **Output Device**.
-3. Choose a **Mode** and dial in the knobs.
-4. Click **Apply** to commit the routing and settings.
-5. Use **Bypass** to A/B the processed vs. unprocessed signal.
+2. Set **Input Device** to your microphone and **Output Device** to your headphones.
+3. Choose a mode, set the knobs, and click **Apply**.
 
-### Tip: processing system or application audio
+> **Use headphones** when the input is a microphone, otherwise the output will feed back into the mic and cause a loud feedback loop.
 
-To compress audio from another app (music, a game, etc.) rather than a microphone, route that app's output through a virtual audio cable (such as [VB-CABLE](https://vb-audio.com/Cable/)):
+### Live controls
 
-1. Set the source app's playback device to the virtual cable's input.
-2. In Clamp, select the virtual cable's output as your **Input Device** and your headphones as the **Output Device**.
-
-Use headphones when testing with a microphone to avoid feedback.
+- **Bypass** toggles processing on/off instantly so you can A/B the processed vs. unprocessed sound.
+- **Reset to Defaults** restores the knobs to their defaults (then click **Apply** to commit them).
+- Changing the knobs or mode only takes effect after you click **Apply**.
 
 ## Project structure
 
@@ -103,6 +156,17 @@ audio-compressor/
     ├── CompressorProcessor.h/.cpp# DSP: compressor / limiter / leveler
     └── CompressorLookAndFeel.h   # Custom UI theme
 ```
+
+
+## How it works
+
+The project is organized into a few focused classes:
+
+- **`AudioEngine`** — implements `juce::AudioIODeviceCallback`. Performs the input-to-output pass-through and owns the DSP. Parameters set from the GUI are stored in `std::atomic` members, making the GUI-to-audio-thread handoff lock-free and real-time safe.
+- **`CompressorProcessor`** — the DSP core. For each sample it detects the peak level across channels (stereo-linked), converts to decibels, computes the required gain reduction for the active mode, smooths it with a one-pole attack/release envelope, and applies the result plus makeup gain.
+- **`MainComponent`** — the GUI: device routing, parameter knobs, the mode selector, and the buttons. It pushes committed values into the `AudioEngine`.
+- **`CompressorLookAndFeel`** — custom theming for the interface.
+
 
 ## Status
 
