@@ -35,6 +35,11 @@ class AudioEngine : public juce::AudioIODeviceCallback
             int bufferSize { 0 };
             CompressorProcessor processor;
 
+            // Diagnostic: track the loudest input sample, logged every few seconds.
+            int samplesSinceLog { 0 };
+            float peakSinceLog { 0.0f };
+            bool loggedFirstCallback { false };
+
             // Written by the GUI thread, read by the audio thread.
             std::atomic<float> threshold { -18.0f };
             std::atomic<float> ratio     { 4.0f };

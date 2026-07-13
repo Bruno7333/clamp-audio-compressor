@@ -1,4 +1,6 @@
 #include "AudioEngine.h"
+#include <cmath>
+#include <algorithm>
 
 AudioEngine::AudioEngine()
 {
@@ -27,6 +29,12 @@ void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
         + " | buffer: " + juce::String(bufferSize) + " smp"
         + " | total ~" + juce::String(totalMs, 2) + " ms");
 
+    juce::String sizes;
+    for (auto s : device->getAvailableBufferSizes())
+        sizes << s << " ";
+    juce::Logger::writeToLog("Available buffer sizes: " + sizes);
+
+    loggedFirstCallback = false;
     processor.prepare(sampleRate);
 }
 
@@ -37,6 +45,13 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const* inputChan
                                                    int numSamples,
                                                    const juce::AudioIODeviceCallbackContext& context)
 {
+    if (!loggedFirstCallback)
+    {
+        loggedFirstCallback = true;
+        juce::Logger::writeToLog("Audio callback running | numSamples: " + juce::String(numSamples)
+            + " | in ch: " + juce::String(numInputChannels)
+            + " | out ch: " + juce::String(numOutputChannels));
+    }
 
     for(int channel = 0; channel < numOutputChannels; channel++){
         if(channel < numInputChannels && inputChannelData[channel] != nullptr){
@@ -49,6 +64,22 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const* inputChan
                 outputChannelData[channel][sample] = 0.0f;
             }
         }
+    }
+
+    // Diagnostic: report the input peak every ~3 seconds so silent input is visible in the log.
+    for (int c = 0; c < numInputChannels; ++c)
+        if (inputChannelData[c] != nullptr)
+            for (int s = 0; s < numSamples; ++s)
+                peakSinceLog = std::max(peakSinceLog, std::abs(inputChannelData[c][s]));
+
+    samplesSinceLog += numSamples;
+    if (sampleRate > 0.0 && samplesSinceLog >= (int) (sampleRate * 3.0))
+    {
+        juce::Logger::writeToLog("Input peak (last 3s): " + juce::String(peakSinceLog, 4)
+            + " | in ch: " + juce::String(numInputChannels)
+            + " | out ch: " + juce::String(numOutputChannels));
+        samplesSinceLog = 0;
+        peakSinceLog = 0.0f;
     }
 
     // Pull the latest GUI values into the processor (audio thread reads atomics).
@@ -74,5 +105,5 @@ void AudioEngine::setMode(int newMode)               { mode.store(newMode); }
 
 void AudioEngine::audioDeviceStopped()
 {
-
+    juce::Logger::writeToLog("Audio device stopped.");
 }

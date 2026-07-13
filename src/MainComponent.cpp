@@ -5,7 +5,28 @@ MainComponent::MainComponent()
     setSize(700,500);
     setLookAndFeel(&lookAndFeel);
 
-    deviceManager.initialise(2, 2, nullptr, true);
+    juce::AudioDeviceManager::AudioDeviceSetup preferredSetup;
+    preferredSetup.bufferSize = 144;
+    preferredSetup.sampleRate = 48000.0;
+
+    deviceManager.initialise(2, 2, nullptr, true, {}, &preferredSetup);
+    // Shared low-latency mode (~30 ms with this driver stack). WASAPI Exclusive Mode
+    // reaches a 144-sample buffer (~15 ms) but both VB-Cable and HIFI-CABLE stall in
+    // exclusive capture (callback fires once, then no data events). ASIO would be the
+    // next step for sub-30 ms.
+    deviceManager.setCurrentAudioDeviceType("Windows Audio (Low Latency Mode)", true);
+
+    // Re-request the small buffer on the low-latency device type.
+    deviceManager.getAudioDeviceSetup(preferredSetup);
+    preferredSetup.bufferSize = 144;
+    preferredSetup.sampleRate = 48000.0;
+    const juce::String setupError = deviceManager.setAudioDeviceSetup(preferredSetup, true);
+
+    if (setupError.isNotEmpty())
+        juce::Logger::writeToLog("Device setup error: " + setupError);
+    if (deviceManager.getCurrentAudioDevice() == nullptr)
+        juce::Logger::writeToLog("No audio device is running after startup.");
+
     deviceManager.addAudioCallback(&engine);
 
     // Title + section headers
@@ -151,8 +172,27 @@ void MainComponent::applyAudioDeviceSetup()
 
     audioSetup.inputDeviceName = inputMenu.getText();
     audioSetup.outputDeviceName = outputMenu.getText();
+    audioSetup.bufferSize = 144;
+    audioSetup.sampleRate = 48000.0;
 
-    deviceManager.setAudioDeviceSetup(audioSetup, true);
+    const juce::String error = deviceManager.setAudioDeviceSetup(audioSetup, true);
+
+    if (error.isNotEmpty())
+    {
+        juce::Logger::writeToLog("Device setup error: " + error);
+        applyButton.setButtonText("Device Error - See Log");
+        startTimer(2500);
+        return;
+    }
+
+    // Read back what the device manager actually opened (may differ from the request).
+    juce::AudioDeviceManager::AudioDeviceSetup actual;
+    deviceManager.getAudioDeviceSetup(actual);
+    juce::Logger::writeToLog("Applied routing | in: " + actual.inputDeviceName
+        + " | out: " + actual.outputDeviceName
+        + " | rate: " + juce::String(actual.sampleRate)
+        + " | buffer: " + juce::String(actual.bufferSize));
+
     applyButton.setButtonText("Changes Applied");
     startTimer(1500);
 
