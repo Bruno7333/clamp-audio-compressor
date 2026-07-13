@@ -33,17 +33,25 @@ class AudioLimiterApp : public juce::JUCEApplication
         }
         void initialise(const juce::String& commandLine) override
         {
+            // Send juce::Logger output to a file (also still goes to the debugger).
+            fileLogger.reset(juce::FileLogger::createDefaultAppLogger("Clamp", "clamp.log", "Clamp started"));
+            juce::Logger::setCurrentLogger(fileLogger.get());
+
             myMainWindow.reset(new MyApplicationWindow());
         }
 
         void shutdown() override
         {
             myMainWindow.reset();
+
+            juce::Logger::setCurrentLogger(nullptr);
+            fileLogger.reset();
         }
         
     
     private:
         std::unique_ptr<MyApplicationWindow> myMainWindow;
+        std::unique_ptr<juce::FileLogger> fileLogger;
     
 };
 

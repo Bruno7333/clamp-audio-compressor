@@ -15,6 +15,18 @@ void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
     sampleRate = device->getCurrentSampleRate();
     bufferSize = device->getCurrentBufferSizeSamples();
 
+    const int inLatency  = device->getInputLatencyInSamples();
+    const int outLatency = device->getOutputLatencyInSamples();
+    const double totalMs = (inLatency + outLatency + bufferSize) * 1000.0 / sampleRate;
+
+    juce::Logger::writeToLog("Device: " + device->getName()
+        + " | type: " + device->getTypeName()
+        + " | rate: " + juce::String(sampleRate)
+        + " | in: " + juce::String(inLatency) + " smp"
+        + " | out: " + juce::String(outLatency) + " smp"
+        + " | buffer: " + juce::String(bufferSize) + " smp"
+        + " | total ~" + juce::String(totalMs, 2) + " ms");
+
     processor.prepare(sampleRate);
 }
 
